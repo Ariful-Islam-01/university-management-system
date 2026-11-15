@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Management System - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Global Alert / Notification Banner -->
+    <div id="alert-container" class="alert-container" aria-live="polite"></div>
+
+    <!-- ==================== 1. LOGIN VIEW ==================== -->
+    <div id="login-view" class="view-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-badge">CSE 3220</div>
+                <h1>University Management System</h1>
+                <p class="subtitle">Session-based Authentication & Role-Based Access Control</p>
+            </div>
+
+            <form id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="login-email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="login-email" name="email" placeholder="e.g. admin@university.com" required autocomplete="username">
+                    <small class="field-error" id="login-email-error"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Password <span class="required">*</span></label>
+                    <input type="password" id="login-password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                    <small class="field-error" id="login-password-error"></small>
+                </div>
+
+                <button type="submit" id="btn-login" class="btn btn-primary btn-block">Sign In</button>
+            </form>
+
+            <div class="login-footer">
+                <p>Default credentials (if seeded):</p>
+                <code>Admin: Initial admin configured via environment variables</code>
+                <p class="mt-2 text-muted text-sm">Protected by Spring Security CSRF & BCrypt Password Hashing</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. DASHBOARD VIEW ==================== -->
+    <div id="dashboard-view" class="view-container" style="display: none;">
+        <!-- Top Navigation Bar -->
+        <header class="top-navbar">
+            <div class="navbar-brand">
+                <span class="brand-logo">🏛️</span>
+                <span class="brand-name">University Portal</span>
+            </div>
+
+            <div class="navbar-user">
+                <div class="user-info">
+                    <span id="user-email-display" class="user-email">user@university.com</span>
+                    <span id="user-role-badge" class="badge badge-role">ROLE</span>
+                </div>
+                <button id="btn-logout" class="btn btn-secondary btn-sm" title="Sign out of your session">Sign Out</button>
+            </div>
+        </header>
+
+        <!-- Main Layout with Sidebar and Content -->
+        <div class="dashboard-layout">
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-tab="overview">
+                        <span class="nav-icon">📊</span> Overview
+                    </button>
+                    <button class="nav-item" id="nav-admins" data-tab="admins" style="display: none;">
+                        <span class="nav-icon">🛡️</span> Manage Admins
+                    </button>
+                    <button class="nav-item" id="nav-teachers" data-tab="teachers" style="display: none;">
+                        <span class="nav-icon">👨‍🏫</span> Manage Teachers
+                    </button>
+                    <button class="nav-item" id="nav-students" data-tab="students" style="display: none;">
+                        <span class="nav-icon">🎓</span> Manage Students
+                    </button>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="rbac-indicator">
+                        <small>RBAC Active</small>
+                        <span class="indicator-dot"></span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- ================= TAB: OVERVIEW ================= -->
+                <section id="tab-overview" class="tab-panel active">
+                    <div class="panel-header">
+                        <h2>System Dashboard Overview</h2>
+                        <p class="text-muted">Welcome back. View resource summaries and verify Role-Based Access Control below.</p>
+                    </div>
+
+                    <!-- Summary Cards Grid -->
+                    <div class="cards-grid">
+                        <div class="stat-card" id="card-admins" style="display: none;">
+                            <div class="stat-icon bg-indigo">🛡️</div>
+                            <div class="stat-body">
+                                <h3>Total Admins</h3>
+                                <div class="stat-count" id="count-admins">-</div>
+                                <span class="stat-permission text-indigo">ROLE_ADMIN only</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card" id="card-teachers" style="display: none;">
+                            <div class="stat-icon bg-teal">👨‍🏫</div>
+                            <div class="stat-body">
+                                <h3>Total Teachers</h3>
+                                <div class="stat-count" id="count-teachers">-</div>
+                                <span class="stat-permission text-teal">ROLE_ADMIN &amp; ROLE_TEACHER</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card" id="card-students" style="display: none;">
+                            <div class="stat-icon bg-emerald">🎓</div>
+                            <div class="stat-body">
+                                <h3>Total Students</h3>
+                                <div class="stat-count" id="count-students">-</div>
+                                <span class="stat-permission text-emerald">ROLE_ADMIN &amp; ROLE_STUDENT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live RBAC Demonstration Card -->
+                    <div class="content-card mt-4">
+                        <div class="card-header">
+                            <h3>Live RBAC Authorization Verification</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-sm">Click the test buttons below to send direct API requests with your current session cookie. This demonstrates how Spring Security enforces <code>403 Forbidden</code> on unauthorized endpoints even if a user tries to access them.</p>
+                            <div class="button-group mt-2">
+                                <button id="btn-test-admins-api" class="btn btn-outline btn-sm">Test GET /api/admins</button>
+                                <button id="btn-test-teachers-api" class="btn btn-outline btn-sm">Test GET /api/teachers</button>
+                                <button id="btn-test-students-api" class="btn btn-outline btn-sm">Test GET /api/students</button>
+                            </div>
+                            <div id="rbac-test-output" class="console-box mt-3" style="display: none;">
+                                <div class="console-header">API Response Inspector</div>
+                                <pre id="rbac-test-result">Awaiting test...</pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= TAB: ADMINS ================= -->
+                <section id="tab-admins" class="tab-panel" style="display: none;">
+                    <div class="panel-header flex-between">
+                        <div>
+                            <h2>Admin Management</h2>
+                            <p class="text-muted">Manage administrators (restricted to <code>ROLE_ADMIN</code>).</p>
+                        </div>
+                        <button id="btn-refresh-admins" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+                    </div>
+
+                    <!-- Create / Edit Form Card -->
+                    <div class="content-card mb-4">
+                        <div class="card-header">
+                            <h3 id="admin-form-title">Add New Admin</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="admin-form" class="resource-form" novalidate>
+                                <input type="hidden" id="admin-id">
+                                <div class="form-row">
+                                    <div class="form-group col">
+                                        <label for="admin-name">Full Name <span class="required">*</span></label>
+                                        <input type="text" id="admin-name" placeholder="e.g. John Doe" required>
+                                        <small class="field-error" id="admin-name-error"></small>
+                                    </div>
+                                    <div class="form-group col">
+                                        <label for="admin-email">Email Address <span class="required">*</span></label>
+                                        <input type="email" id="admin-email" placeholder="e.g. jdoe@university.com" required>
+                                        <small class="field-error" id="admin-email-error"></small>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" id="btn-admin-submit" class="btn btn-primary">Save Admin</button>
+                                    <button type="button" id="btn-admin-cancel" class="btn btn-secondary" style="display: none;">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Admins Table Card -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Admins List</h3>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="data-table" id="admins-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th style="width: 150px; text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admins-table-body">
+                                    <tr><td colspan="4" class="text-center text-muted">Loading administrators...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= TAB: TEACHERS ================= -->
+                <section id="tab-teachers" class="tab-panel" style="display: none;">
+                    <div class="panel-header flex-between">
+                        <div>
+                            <h2>Teacher Management</h2>
+                            <p class="text-muted">Manage teacher records (accessible to <code>ROLE_ADMIN</code> &amp; <code>ROLE_TEACHER</code>).</p>
+                        </div>
+                        <button id="btn-refresh-teachers" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+                    </div>
+
+                    <!-- Create / Edit Form Card -->
+                    <div class="content-card mb-4">
+                        <div class="card-header">
+                            <h3 id="teacher-form-title">Add New Teacher</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="teacher-form" class="resource-form" novalidate>
+                                <input type="hidden" id="teacher-id">
+                                <div class="form-row">
+                                    <div class="form-group col">
+                                        <label for="teacher-name">Full Name <span class="required">*</span></label>
+                                        <input type="text" id="teacher-name" placeholder="e.g. Dr. Alan Turing" required>
+                                        <small class="field-error" id="teacher-name-error"></small>
+                                    </div>
+                                    <div class="form-group col">
+                                        <label for="teacher-email">Email Address <span class="required">*</span></label>
+                                        <input type="email" id="teacher-email" placeholder="e.g. aturing@university.com" required>
+                                        <small class="field-error" id="teacher-email-error"></small>
+                                    </div>
+                                    <div class="form-group col">
+                                        <label for="teacher-department">Department <span class="required">*</span></label>
+                                        <input type="text" id="teacher-department" placeholder="e.g. Computer Science" required>
+                                        <small class="field-error" id="teacher-department-error"></small>
+                                    </div>
+                                </div>
+                                <div id="teacher-account-section" class="account-creation-section mt-3" style="display: none;">
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" for="teacher-create-account">
+                                            <input type="checkbox" id="teacher-create-account">
+                                            <span>Create login account (ROLE_TEACHER)</span>
+                                        </label>
+                                    </div>
+                                    <div id="teacher-password-fields" class="form-row mt-2" style="display: none;">
+                                        <div class="form-group col">
+                                            <label for="teacher-password">Account Password <span class="required">*</span></label>
+                                            <input type="password" id="teacher-password" placeholder="Enter account password">
+                                            <small class="field-error" id="teacher-password-error"></small>
+                                        </div>
+                                        <div class="form-group col">
+                                            <label for="teacher-confirm-password">Confirm Password <span class="required">*</span></label>
+                                            <input type="password" id="teacher-confirm-password" placeholder="Re-enter account password">
+                                            <small class="field-error" id="teacher-confirm-password-error"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-actions mt-3">
+                                    <button type="submit" id="btn-teacher-submit" class="btn btn-primary">Save Teacher</button>
+                                    <button type="button" id="btn-teacher-cancel" class="btn btn-secondary" style="display: none;">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Teachers Table Card -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Teachers List</h3>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="data-table" id="teachers-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th style="width: 150px; text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teachers-table-body">
+                                    <tr><td colspan="5" class="text-center text-muted">Loading teachers...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= TAB: STUDENTS ================= -->
+                <section id="tab-students" class="tab-panel" style="display: none;">
+                    <div class="panel-header flex-between">
+                        <div>
+                            <h2>Student Management</h2>
+                            <p class="text-muted">Manage student records (accessible to <code>ROLE_ADMIN</code> &amp; <code>ROLE_STUDENT</code>).</p>
+                        </div>
+                        <button id="btn-refresh-students" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+                    </div>
+
+                    <!-- Create / Edit Form Card -->
+                    <div class="content-card mb-4">
+                        <div class="card-header">
+                            <h3 id="student-form-title">Add New Student</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="student-form" class="resource-form" novalidate>
+                                <input type="hidden" id="student-id">
+                                <div class="form-row">
+                                    <div class="form-group col">
+                                        <label for="student-name">Full Name <span class="required">*</span></label>
+                                        <input type="text" id="student-name" placeholder="e.g. Grace Hopper" required>
+                                        <small class="field-error" id="student-name-error"></small>
+                                    </div>
+                                    <div class="form-group col">
+                                        <label for="student-email">Email Address <span class="required">*</span></label>
+                                        <input type="email" id="student-email" placeholder="e.g. ghopper@university.com" required>
+                                        <small class="field-error" id="student-email-error"></small>
+                                    </div>
+                                    <div class="form-group col">
+                                        <label for="student-department">Department <span class="required">*</span></label>
+                                        <input type="text" id="student-department" placeholder="e.g. Computer Science" required>
+                                        <small class="field-error" id="student-department-error"></small>
+                                    </div>
+                                </div>
+                                <div id="student-account-section" class="account-creation-section mt-3" style="display: none;">
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label" for="student-create-account">
+                                            <input type="checkbox" id="student-create-account">
+                                            <span>Create login account (ROLE_STUDENT)</span>
+                                        </label>
+                                    </div>
+                                    <div id="student-password-fields" class="form-row mt-2" style="display: none;">
+                                        <div class="form-group col">
+                                            <label for="student-password">Account Password <span class="required">*</span></label>
+                                            <input type="password" id="student-password" placeholder="Enter account password">
+                                            <small class="field-error" id="student-password-error"></small>
+                                        </div>
+                                        <div class="form-group col">
+                                            <label for="student-confirm-password">Confirm Password <span class="required">*</span></label>
+                                            <input type="password" id="student-confirm-password" placeholder="Re-enter account password">
+                                            <small class="field-error" id="student-confirm-password-error"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-actions mt-3">
+                                    <button type="submit" id="btn-student-submit" class="btn btn-primary">Save Student</button>
+                                    <button type="button" id="btn-student-cancel" class="btn btn-secondary" style="display: none;">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Students Table Card -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Students List</h3>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="data-table" id="students-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th style="width: 150px; text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="students-table-body">
+                                    <tr><td colspan="5" class="text-center text-muted">Loading students...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal Dialog -->
+    <div id="confirm-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="confirm-modal-title">Confirm Action</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-modal-message">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-confirm-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="btn-confirm-ok" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
