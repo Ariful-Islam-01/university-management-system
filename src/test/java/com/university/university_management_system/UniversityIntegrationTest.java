@@ -41,6 +41,10 @@ public class UniversityIntegrationTest {
         userRepository.findByEmail(TEST_ADMIN_EMAIL).ifPresent(userRepository::delete);
     }
 
+    // ==========================================
+    // Admin Authentication
+    // ==========================================
+
     // 1. Admin login works successfully
     @Test
     void adminLoginWorksSuccessfully() throws Exception {
@@ -65,34 +69,7 @@ public class UniversityIntegrationTest {
                 .andExpect(jsonPath("$.role").value("ROLE_ADMIN"));
     }
 
-    // 2. Admin can access the Student API
-    @Test
-    @WithMockUser(username = "admin@university.com", roles = {"ADMIN"})
-    void adminCanAccessStudentApi() throws Exception {
-        // Act & Assert: request student endpoint as ADMIN and verify 200 OK
-        mockMvc.perform(get("/api/students"))
-                .andExpect(status().isOk());
-    }
-
-    // 3. Teacher can access the Teacher API
-    @Test
-    @WithMockUser(username = "teacher@university.com", roles = {"TEACHER"})
-    void teacherCanAccessTeacherApi() throws Exception {
-        // Act & Assert: request teacher endpoint as TEACHER and verify 200 OK
-        mockMvc.perform(get("/api/teachers"))
-                .andExpect(status().isOk());
-    }
-
-    // 4. Student can access the Student API
-    @Test
-    @WithMockUser(username = "student@university.com", roles = {"STUDENT"})
-    void studentCanAccessStudentApi() throws Exception {
-        // Act & Assert: request student endpoint as STUDENT and verify 200 OK
-        mockMvc.perform(get("/api/students"))
-                .andExpect(status().isOk());
-    }
-
-    // 5. Admin can log out successfully
+    // 2. Admin logout works successfully
     @Test
     void adminLogoutWorksSuccessfully() throws Exception {
         // Arrange: save admin user and log in to obtain active session
@@ -122,5 +99,61 @@ public class UniversityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Logout successful"));
     }
-}
 
+    // ==========================================
+    // Admin Authorization
+    // ==========================================
+
+    // 3. Admin can access Student API
+    @Test
+    @WithMockUser(username = "admin@university.com", roles = {"ADMIN"})
+    void adminCanAccessStudentApi() throws Exception {
+        // Act & Assert: request student endpoint as ADMIN and verify 200 OK
+        mockMvc.perform(get("/api/students"))
+                .andExpect(status().isOk());
+    }
+
+    // ==========================================
+    // Teacher Authorization
+    // ==========================================
+
+    // 4. Teacher can access Teacher API
+    @Test
+    @WithMockUser(username = "teacher@university.com", roles = {"TEACHER"})
+    void teacherCanAccessTeacherApi() throws Exception {
+        // Act & Assert: request teacher endpoint as TEACHER and verify 200 OK
+        mockMvc.perform(get("/api/teachers"))
+                .andExpect(status().isOk());
+    }
+
+    // 5. Teacher cannot access Student API
+    @Test
+    @WithMockUser(username = "teacher@university.com", roles = {"TEACHER"})
+    void teacherCannotAccessStudentApi() throws Exception {
+        // Act & Assert: TEACHER role is forbidden from student endpoint -> 403 Forbidden
+        mockMvc.perform(get("/api/students"))
+                .andExpect(status().isForbidden());
+    }
+
+    // ==========================================
+    // Student Authorization
+    // ==========================================
+
+    // 6. Student can access Student API
+    @Test
+    @WithMockUser(username = "student@university.com", roles = {"STUDENT"})
+    void studentCanAccessStudentApi() throws Exception {
+        // Act & Assert: request student endpoint as STUDENT and verify 200 OK
+        mockMvc.perform(get("/api/students"))
+                .andExpect(status().isOk());
+    }
+
+    // 7. Student cannot access Teacher API
+    @Test
+    @WithMockUser(username = "student@university.com", roles = {"STUDENT"})
+    void studentCannotAccessTeacherApi() throws Exception {
+        // Act & Assert: STUDENT role is forbidden from teacher endpoint -> 403 Forbidden
+        mockMvc.perform(get("/api/teachers"))
+                .andExpect(status().isForbidden());
+    }
+}
