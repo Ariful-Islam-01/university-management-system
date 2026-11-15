@@ -10,7 +10,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -88,6 +90,37 @@ public class UniversityIntegrationTest {
         // Act & Assert: request student endpoint as STUDENT and verify 200 OK
         mockMvc.perform(get("/api/students"))
                 .andExpect(status().isOk());
+    }
+
+    // 5. Admin can log out successfully
+    @Test
+    void adminLogoutWorksSuccessfully() throws Exception {
+        // Arrange: save admin user and log in to obtain active session
+        User adminUser = new User(TEST_ADMIN_EMAIL, passwordEncoder.encode("adminPass123"), "ROLE_ADMIN");
+        userRepository.save(adminUser);
+
+        String loginJson = """
+            {
+                "email": "%s",
+                "password": "adminPass123"
+            }
+            """.formatted(TEST_ADMIN_EMAIL);
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession();
+
+        // Act & Assert: perform logout with authenticated session and CSRF token, verify 200 OK
+        mockMvc.perform(post("/api/auth/logout")
+                        .with(csrf())
+                        .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Logout successful"));
     }
 }
 
